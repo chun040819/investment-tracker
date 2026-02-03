@@ -14,6 +14,7 @@ from app.schemas.cash_transaction import (
     CashTransactionUpdate,
 )
 from app.routers.utils import handle_integrity_error
+from app.services.cache import cache_delete_pattern
 
 router = APIRouter(prefix="/cash-transactions", tags=["cash-transactions"])
 
@@ -66,6 +67,7 @@ def create_cash_transaction(payload: CashTransactionCreate, db: Session = Depend
         db.rollback()
         handle_integrity_error(exc, "CashTransaction")
     db.refresh(txn)
+    cache_delete_pattern(f"cache:portfolio:{txn.portfolio_id}:*")
     return txn
 
 
@@ -90,6 +92,7 @@ def update_cash_transaction(txn_id: int, payload: CashTransactionUpdate, db: Ses
         db.rollback()
         handle_integrity_error(exc, "CashTransaction")
     db.refresh(txn)
+    cache_delete_pattern(f"cache:portfolio:{txn.portfolio_id}:*")
     return txn
 
 
@@ -100,4 +103,5 @@ def delete_cash_transaction(txn_id: int, db: Session = Depends(get_db)) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cash transaction not found")
     db.delete(txn)
     db.commit()
+    cache_delete_pattern(f"cache:portfolio:{txn.portfolio_id}:*")
     return None

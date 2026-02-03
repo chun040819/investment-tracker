@@ -12,6 +12,7 @@ from app.models.position_snapshot import PositionSnapshot
 from app.models.price_history import PriceHistory
 from app.models.trade import Trade, TradeSide
 from app.services.cash_ledger_service import build_trade_expense_txn, get_cash_balance
+from app.services.tax_lot_service import rebuild_tax_lots
 from app.services.unit_of_work import UnitOfWork
 
 
@@ -28,12 +29,33 @@ def process_corporate_action(db: Session, action_id: int) -> dict:
         else:
             trades_created = _apply_split_like(db, action)
         action.processed_at = datetime.now(timezone.utc)
+        _rebuild_lots_for_asset(db, action.asset_id)
 
     return {
         "action_id": action.id,
         "type": action.type.value,
         "trades_created": trades_created,
     }
+
+
+def _rebuild_lots_for_asset(db: Session, asset_id: int) -> None:
+    portfolio_ids = set()
+    trades = db.execute(select(Trade.portfolio_id).where(Trade.asset_id == asset_id)).scalars().all()
+    cash_divs = (
+        db.execute(
+            select(CashTransaction.portfolio_id).where(
+                CashTransaction.asset_id == asset_id,
+                CashTransaction.type == CashTxnType.DIVIDEND_STOCK,
+            )
+        )
+        .scalars()
+        .all()
+    )
+    portfolio_ids.update(trades)
+    portfolio_ids.update(cash_divs)
+
+    for pid in portfolio_ids:
+        rebuild_tax_lots(db, pid, asset_id)
 
 
 def _apply_split_like(db: Session, action: CorporateAction) -> int:

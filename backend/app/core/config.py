@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     database_url: str = f"sqlite:///{(BASE_DIR.parent / 'data' / 'app.db').as_posix()}"
     app_name: str = "Investment Tracker Backend"
+    redis_url: str | None = "redis://localhost:6379/0"
+    cache_ttl_seconds: int = 600
 
     @staticmethod
     def _ensure_sqlite_dir(url: str) -> None:

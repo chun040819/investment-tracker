@@ -25,6 +25,7 @@ from app.models.price_history import PriceHistory  # noqa: F401,E402
 from app.models.fx_rate import FXRate  # noqa: F401,E402
 from app.models.tag import Tag  # noqa: F401,E402
 from app.models.position_snapshot import PositionSnapshot  # noqa: F401,E402
+from app.models.tax_lot import TaxLot  # noqa: F401,E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

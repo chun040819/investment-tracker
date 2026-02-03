@@ -15,6 +15,8 @@ from app.models.asset import Asset
 from app.models.account import Account
 from app.models.fx_rate import FXRate
 from app.services.cash_ledger_service import build_trade_expense_txn, get_cash_balance, trade_total_cost
+from app.services.cache import cache_delete_pattern
+from app.services.tax_lot_service import rebuild_tax_lots
 from app.services.unit_of_work import UnitOfWork
 
 router = APIRouter(prefix="/trades", tags=["trades"])
@@ -104,6 +106,7 @@ def _available_shares(db: Session, portfolio_id: int, asset_id: int, up_to: date
     stock_divs = db.execute(
         select(CashTransaction)
         .where(
+            CashTransaction.portfolio_id == portfolio_id,
             CashTransaction.asset_id == asset_id,
             CashTransaction.type == CashTxnType.DIVIDEND_STOCK,
             CashTransaction.date <= up_to,
@@ -188,10 +191,15 @@ def create_trade(payload: TradeCreate, db: Session = Depends(get_db)) -> Trade:
     try:
         with UnitOfWork(db):
             db.add(trade)
+            db.flush()
             if trade.side == trade.side.BUY:
                 db.add(build_trade_expense_txn(trade))
+            rebuild_tax_lots(db, trade.portfolio_id, trade.asset_id)
     except IntegrityError as exc:
         handle_integrity_error(exc, "Trade")
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    cache_delete_pattern(f"cache:portfolio:{trade.portfolio_id}:*")
     db.refresh(trade)
     return trade
 
@@ -242,10 +250,14 @@ def update_trade(trade_id: int, payload: TradeUpdate, db: Session = Depends(get_
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Sell quantity exceeds available shares")
 
     try:
-        db.commit()
+        with UnitOfWork(db):
+            db.flush()
+            rebuild_tax_lots(db, trade.portfolio_id, trade.asset_id)
     except IntegrityError as exc:
-        db.rollback()
         handle_integrity_error(exc, "Trade")
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    cache_delete_pattern(f"cache:portfolio:{trade.portfolio_id}:*")
     db.refresh(trade)
     return trade
 
@@ -255,6 +267,14 @@ def delete_trade(trade_id: int, db: Session = Depends(get_db)) -> None:
     trade = db.get(Trade, trade_id)
     if not trade:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
-    db.delete(trade)
-    db.commit()
+    portfolio_id = trade.portfolio_id
+    asset_id = trade.asset_id
+    try:
+        with UnitOfWork(db):
+            db.delete(trade)
+            db.flush()
+            rebuild_tax_lots(db, portfolio_id, asset_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    cache_delete_pattern(f"cache:portfolio:{portfolio_id}:*")
     return None

@@ -10,6 +10,8 @@ from app.models.asset import Asset
 from app.models.price_history import PriceHistory
 from app.schemas.price import PricePoint, PriceUpdateResult
 from app.services.pricing import fetch_daily_close
+from app.services.cache import cache_get, cache_set, cache_delete
+from app.core.config import settings
 from app.routers.utils import handle_integrity_error
 
 router = APIRouter(prefix="/prices", tags=["prices"])
@@ -69,11 +71,17 @@ def update_prices(
         db.rollback()
         handle_integrity_error(exc, "PriceHistory")
 
+    cache_delete(f"cache:price:latest:{asset_id}")
     return PriceUpdateResult(inserted=inserted, updated=updated)
 
 
 @router.get("/latest", response_model=PricePoint)
 def latest_price(asset_id: int = Query(...), db: Session = Depends(get_db)) -> PricePoint:
+    cache_key = f"cache:price:latest:{asset_id}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return PricePoint.model_validate(cached)
+
     stmt = (
         select(PriceHistory)
         .where(PriceHistory.asset_id == asset_id)
@@ -83,4 +91,6 @@ def latest_price(asset_id: int = Query(...), db: Session = Depends(get_db)) -> P
     ph = db.execute(stmt).scalars().first()
     if not ph:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No price data found")
-    return PricePoint.model_validate(ph)
+    result = PricePoint.model_validate(ph)
+    cache_set(cache_key, result.model_dump(mode="json"), ttl_seconds=settings.cache_ttl_seconds)
+    return result
