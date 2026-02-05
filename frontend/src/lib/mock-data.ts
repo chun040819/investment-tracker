@@ -81,3 +81,55 @@ export const RecentActivityData = [
     status: "Completed",
   },
 ];
+
+export const PortfolioData = [
+  {
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    quantity: 150,
+    avgCost: 145.50,
+    currentPrice: 173.50,
+  },
+  {
+    symbol: "MSFT",
+    name: "Microsoft Corp.",
+    quantity: 80,
+    avgCost: 280.00,
+    currentPrice: 330.20,
+  },
+  {
+    symbol: "VTI",
+    name: "Vanguard Total Stock Market",
+    quantity: 200,
+    avgCost: 205.10,
+    currentPrice: 215.30,
+  },
+  {
+    symbol: "TSLA",
+    name: "Tesla Inc.",
+    quantity: 50,
+    avgCost: 250.00,
+    currentPrice: 210.00, // Loss example
+  },
+  {
+    symbol: "NVDA",
+    name: "NVIDIA Corp.",
+    quantity: 30,
+    avgCost: 350.00,
+    currentPrice: 450.00,
+  },
+  {
+    symbol: "AMZN",
+    name: "Amazon.com Inc.",
+    quantity: 100,
+    avgCost: 130.00,
+    currentPrice: 128.50, // Small loss example
+  },
+  {
+    symbol: "GOOGL",
+    name: "Alphabet Inc.",
+    quantity: 60,
+    avgCost: 110.00,
+    currentPrice: 135.00,
+  },
+];
