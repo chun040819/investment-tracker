@@ -3,8 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.asset import Asset
+from app.models.user import User
 from app.schemas.asset import AssetCreate, AssetRead, AssetUpdate
 from app.routers.utils import handle_integrity_error
 from app.models.tag import Tag
@@ -13,7 +15,11 @@ router = APIRouter(prefix="/assets", tags=["assets"])
 
 
 @router.get("", response_model=list[AssetRead])
-def list_assets(symbol: str | None = Query(default=None, description="Filter by symbol"), db: Session = Depends(get_db)) -> list[Asset]:
+def list_assets(
+    symbol: str | None = Query(default=None, description="Filter by symbol"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[Asset]:
     stmt = select(Asset)
     if symbol:
         stmt = stmt.where(Asset.symbol == symbol)
@@ -35,7 +41,11 @@ def _upsert_tags(db: Session, tag_names: list[str]) -> list[Tag]:
 
 
 @router.post("", response_model=AssetRead, status_code=status.HTTP_201_CREATED)
-def create_asset(payload: AssetCreate, db: Session = Depends(get_db)) -> Asset:
+def create_asset(
+    payload: AssetCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Asset:
     data = payload.model_dump()
     tag_names = data.pop("tags", None)
     asset = Asset(**data)
@@ -52,7 +62,11 @@ def create_asset(payload: AssetCreate, db: Session = Depends(get_db)) -> Asset:
 
 
 @router.get("/{asset_id}", response_model=AssetRead)
-def get_asset(asset_id: int, db: Session = Depends(get_db)) -> Asset:
+def get_asset(
+    asset_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Asset:
     asset = db.get(Asset, asset_id)
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
@@ -60,7 +74,12 @@ def get_asset(asset_id: int, db: Session = Depends(get_db)) -> Asset:
 
 
 @router.put("/{asset_id}", response_model=AssetRead)
-def update_asset(asset_id: int, payload: AssetUpdate, db: Session = Depends(get_db)) -> Asset:
+def update_asset(
+    asset_id: int,
+    payload: AssetUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Asset:
     asset = db.get(Asset, asset_id)
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
@@ -82,7 +101,11 @@ def update_asset(asset_id: int, payload: AssetUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_asset(asset_id: int, db: Session = Depends(get_db)) -> None:
+def delete_asset(
+    asset_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     asset = db.get(Asset, asset_id)
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")

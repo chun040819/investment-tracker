@@ -3,8 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.account import Account
+from app.models.user import User
 from app.schemas.account import AccountCreate, AccountRead, AccountUpdate
 from app.routers.utils import handle_integrity_error
 
@@ -14,6 +16,7 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 @router.get("", response_model=list[AccountRead])
 def list_accounts(
     portfolio_id: int | None = Query(default=None, description="Filter by portfolio_id"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[Account]:
     stmt = select(Account)
@@ -24,7 +27,11 @@ def list_accounts(
 
 
 @router.post("", response_model=AccountRead, status_code=status.HTTP_201_CREATED)
-def create_account(payload: AccountCreate, db: Session = Depends(get_db)) -> Account:
+def create_account(
+    payload: AccountCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Account:
     account = Account(**payload.model_dump())
     db.add(account)
     try:
@@ -37,7 +44,11 @@ def create_account(payload: AccountCreate, db: Session = Depends(get_db)) -> Acc
 
 
 @router.get("/{account_id}", response_model=AccountRead)
-def get_account(account_id: int, db: Session = Depends(get_db)) -> Account:
+def get_account(
+    account_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Account:
     account = db.get(Account, account_id)
     if not account:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
@@ -45,7 +56,12 @@ def get_account(account_id: int, db: Session = Depends(get_db)) -> Account:
 
 
 @router.put("/{account_id}", response_model=AccountRead)
-def update_account(account_id: int, payload: AccountUpdate, db: Session = Depends(get_db)) -> Account:
+def update_account(
+    account_id: int,
+    payload: AccountUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Account:
     account = db.get(Account, account_id)
     if not account:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
@@ -63,7 +79,11 @@ def update_account(account_id: int, payload: AccountUpdate, db: Session = Depend
 
 
 @router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_account(account_id: int, db: Session = Depends(get_db)) -> None:
+def delete_account(
+    account_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     account = db.get(Account, account_id)
     if not account:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
