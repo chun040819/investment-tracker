@@ -181,3 +181,60 @@ export const AssetActivityData = [
     status: "Completed",
   },
 ];
+
+export const CashSummaryData = {
+  totalBalance: 50000.00,
+  ytdNetInflow: 12500.00,
+  ytdDividends: 450.25,
+};
+
+export const CashTransactionsData = [
+  {
+    id: "c1",
+    date: "2023-11-01",
+    type: "Deposit",
+    amount: 5000.00,
+    currency: "USD",
+    note: "Monthly savings",
+  },
+  {
+    id: "c2",
+    date: "2023-10-25",
+    type: "Trade", // Buy AAPL
+    amount: -1500.00,
+    currency: "USD",
+    note: "Buy 10 AAPL @ $150",
+  },
+  {
+    id: "c3",
+    date: "2023-10-24",
+    type: "Dividend",
+    amount: 45.25,
+    currency: "USD",
+    note: "VTI Q3 Dividend",
+  },
+  {
+    id: "c4",
+    date: "2023-10-15",
+    type: "Withdrawal",
+    amount: -2000.00,
+    currency: "USD",
+    note: "Emergency fund transfer",
+  },
+  {
+    id: "c5",
+    date: "2023-10-01",
+    type: "Interest",
+    amount: 12.50,
+    currency: "USD",
+    note: "High Yield Savings Interest",
+  },
+  {
+    id: "c6",
+    date: "2023-09-15",
+    type: "Trade", // Sell TSLA
+    amount: 4200.00,
+    currency: "USD",
+    note: "Sell 20 TSLA @ $210",
+  }
+];
