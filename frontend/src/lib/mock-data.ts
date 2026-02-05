@@ -133,3 +133,51 @@ export const PortfolioData = [
     currentPrice: 135.00,
   },
 ];
+
+export const AssetPriceHistory = [
+  { date: "2023-01-01", price: 150 },
+  { date: "2023-02-01", price: 155 },
+  { date: "2023-03-01", price: 148 },
+  { date: "2023-04-01", price: 160 },
+  { date: "2023-05-01", price: 165 },
+  { date: "2023-06-01", price: 170 },
+  { date: "2023-07-01", price: 175 },
+  { date: "2023-08-01", price: 172 },
+  { date: "2023-09-01", price: 180 },
+  { date: "2023-10-01", price: 178 },
+  { date: "2023-11-01", price: 185 },
+  { date: "2023-12-01", price: 190 },
+];
+
+export const AssetActivityData = [
+  {
+    id: 101,
+    type: "Buy",
+    asset: "AAPL",
+    amount: 15000,
+    price: 150.00,
+    quantity: 100,
+    date: "2023-01-15",
+    status: "Completed",
+  },
+  {
+    id: 102,
+    type: "Buy",
+    asset: "AAPL",
+    amount: 7750,
+    price: 155.00,
+    quantity: 50,
+    date: "2023-06-20",
+    status: "Completed",
+  },
+  {
+    id: 103,
+    type: "Dividend",
+    asset: "AAPL",
+    amount: 25.50,
+    price: 0,
+    quantity: 0,
+    date: "2023-08-10",
+    status: "Completed",
+  },
+];
