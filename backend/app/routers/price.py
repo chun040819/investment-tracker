@@ -5,9 +5,11 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.asset import Asset
 from app.models.price_history import PriceHistory
+from app.models.user import User
 from app.schemas.price import PricePoint, PriceUpdateResult
 from app.services.pricing import fetch_daily_close
 from app.services.cache import cache_get, cache_set, cache_delete
@@ -22,6 +24,7 @@ def update_prices(
     asset_id: int = Query(...),
     start: date = Query(...),
     end: date = Query(...),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> PriceUpdateResult:
     asset = db.get(Asset, asset_id)
@@ -76,7 +79,11 @@ def update_prices(
 
 
 @router.get("/latest", response_model=PricePoint)
-def latest_price(asset_id: int = Query(...), db: Session = Depends(get_db)) -> PricePoint:
+def latest_price(
+    asset_id: int = Query(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PricePoint:
     cache_key = f"cache:price:latest:{asset_id}"
     cached = cache_get(cache_key)
     if cached is not None:

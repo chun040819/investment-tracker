@@ -3,8 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.tag import Tag
+from app.models.user import User
 from app.schemas.tag import TagCreate, TagRead, TagUpdate
 from app.routers.utils import handle_integrity_error
 
@@ -12,13 +14,20 @@ router = APIRouter(prefix="/tags", tags=["tags"])
 
 
 @router.get("", response_model=list[TagRead])
-def list_tags(db: Session = Depends(get_db)) -> list[Tag]:
+def list_tags(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[Tag]:
     stmt = select(Tag).order_by(Tag.name)
     return db.execute(stmt).scalars().all()
 
 
 @router.post("", response_model=TagRead, status_code=status.HTTP_201_CREATED)
-def create_tag(payload: TagCreate, db: Session = Depends(get_db)) -> Tag:
+def create_tag(
+    payload: TagCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Tag:
     tag = Tag(**payload.model_dump())
     db.add(tag)
     try:
@@ -31,7 +40,11 @@ def create_tag(payload: TagCreate, db: Session = Depends(get_db)) -> Tag:
 
 
 @router.get("/{tag_id}", response_model=TagRead)
-def get_tag(tag_id: int, db: Session = Depends(get_db)) -> Tag:
+def get_tag(
+    tag_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Tag:
     tag = db.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
@@ -39,7 +52,12 @@ def get_tag(tag_id: int, db: Session = Depends(get_db)) -> Tag:
 
 
 @router.put("/{tag_id}", response_model=TagRead)
-def update_tag(tag_id: int, payload: TagUpdate, db: Session = Depends(get_db)) -> Tag:
+def update_tag(
+    tag_id: int,
+    payload: TagUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Tag:
     tag = db.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
@@ -55,7 +73,11 @@ def update_tag(tag_id: int, payload: TagUpdate, db: Session = Depends(get_db)) -
 
 
 @router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_tag(tag_id: int, db: Session = Depends(get_db)) -> None:
+def delete_tag(
+    tag_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     tag = db.get(Tag, tag_id)
     if not tag:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")

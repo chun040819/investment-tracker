@@ -3,8 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.portfolio import Portfolio
+from app.models.user import User
 from app.schemas.portfolio import PortfolioCreate, PortfolioRead, PortfolioUpdate
 from app.routers.utils import handle_integrity_error
 
@@ -12,13 +14,20 @@ router = APIRouter(prefix="/portfolios", tags=["portfolios"])
 
 
 @router.get("", response_model=list[PortfolioRead])
-def list_portfolios(db: Session = Depends(get_db)) -> list[Portfolio]:
+def list_portfolios(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[Portfolio]:
     portfolios = db.execute(select(Portfolio)).scalars().all()
     return portfolios
 
 
 @router.post("", response_model=PortfolioRead, status_code=status.HTTP_201_CREATED)
-def create_portfolio(payload: PortfolioCreate, db: Session = Depends(get_db)) -> Portfolio:
+def create_portfolio(
+    payload: PortfolioCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Portfolio:
     portfolio = Portfolio(**payload.model_dump())
     db.add(portfolio)
     try:
@@ -31,7 +40,11 @@ def create_portfolio(payload: PortfolioCreate, db: Session = Depends(get_db)) ->
 
 
 @router.get("/{portfolio_id}", response_model=PortfolioRead)
-def get_portfolio(portfolio_id: int, db: Session = Depends(get_db)) -> Portfolio:
+def get_portfolio(
+    portfolio_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Portfolio:
     portfolio = db.get(Portfolio, portfolio_id)
     if not portfolio:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
@@ -39,7 +52,12 @@ def get_portfolio(portfolio_id: int, db: Session = Depends(get_db)) -> Portfolio
 
 
 @router.put("/{portfolio_id}", response_model=PortfolioRead)
-def update_portfolio(portfolio_id: int, payload: PortfolioUpdate, db: Session = Depends(get_db)) -> Portfolio:
+def update_portfolio(
+    portfolio_id: int,
+    payload: PortfolioUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Portfolio:
     portfolio = db.get(Portfolio, portfolio_id)
     if not portfolio:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
@@ -57,7 +75,11 @@ def update_portfolio(portfolio_id: int, payload: PortfolioUpdate, db: Session = 
 
 
 @router.delete("/{portfolio_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_portfolio(portfolio_id: int, db: Session = Depends(get_db)) -> None:
+def delete_portfolio(
+    portfolio_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     portfolio = db.get(Portfolio, portfolio_id)
     if not portfolio:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")

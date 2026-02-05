@@ -3,8 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.corporate_action import CorporateAction
+from app.models.user import User
 from app.schemas.corporate_action import (
     CorporateActionCreate,
     CorporateActionRead,
@@ -18,6 +20,7 @@ router = APIRouter(prefix="/corporate-actions", tags=["corporate-actions"])
 @router.get("", response_model=list[CorporateActionRead])
 def list_actions(
     asset_id: int | None = Query(default=None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[CorporateAction]:
     stmt = select(CorporateAction)
@@ -28,7 +31,11 @@ def list_actions(
 
 
 @router.post("", response_model=CorporateActionRead, status_code=status.HTTP_201_CREATED)
-def create_action(payload: CorporateActionCreate, db: Session = Depends(get_db)) -> CorporateAction:
+def create_action(
+    payload: CorporateActionCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CorporateAction:
     action = CorporateAction(**payload.model_dump())
     db.add(action)
     try:
@@ -41,7 +48,11 @@ def create_action(payload: CorporateActionCreate, db: Session = Depends(get_db))
 
 
 @router.get("/{action_id}", response_model=CorporateActionRead)
-def get_action(action_id: int, db: Session = Depends(get_db)) -> CorporateAction:
+def get_action(
+    action_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CorporateAction:
     action = db.get(CorporateAction, action_id)
     if not action:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Corporate action not found")
@@ -49,7 +60,12 @@ def get_action(action_id: int, db: Session = Depends(get_db)) -> CorporateAction
 
 
 @router.put("/{action_id}", response_model=CorporateActionRead)
-def update_action(action_id: int, payload: CorporateActionUpdate, db: Session = Depends(get_db)) -> CorporateAction:
+def update_action(
+    action_id: int,
+    payload: CorporateActionUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CorporateAction:
     action = db.get(CorporateAction, action_id)
     if not action:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Corporate action not found")
@@ -65,7 +81,11 @@ def update_action(action_id: int, payload: CorporateActionUpdate, db: Session = 
 
 
 @router.delete("/{action_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_action(action_id: int, db: Session = Depends(get_db)) -> None:
+def delete_action(
+    action_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     action = db.get(CorporateAction, action_id)
     if not action:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Corporate action not found")

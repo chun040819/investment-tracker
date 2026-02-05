@@ -3,8 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.fx_rate import FXRate
+from app.models.user import User
 from app.schemas.fx_rate import FXRateCreate, FXRateRead, FXRateUpdate
 from app.routers.utils import handle_integrity_error
 
@@ -15,6 +17,7 @@ router = APIRouter(prefix="/fx-rates", tags=["fx-rates"])
 def list_fx_rates(
     from_currency: str | None = Query(default=None),
     to_currency: str | None = Query(default=None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[FXRate]:
     stmt = select(FXRate)
@@ -27,7 +30,11 @@ def list_fx_rates(
 
 
 @router.post("", response_model=FXRateRead, status_code=status.HTTP_201_CREATED)
-def create_fx_rate(payload: FXRateCreate, db: Session = Depends(get_db)) -> FXRate:
+def create_fx_rate(
+    payload: FXRateCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FXRate:
     fx = FXRate(**payload.model_dump())
     db.add(fx)
     try:
@@ -40,7 +47,11 @@ def create_fx_rate(payload: FXRateCreate, db: Session = Depends(get_db)) -> FXRa
 
 
 @router.get("/{fx_id}", response_model=FXRateRead)
-def get_fx_rate(fx_id: int, db: Session = Depends(get_db)) -> FXRate:
+def get_fx_rate(
+    fx_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FXRate:
     fx = db.get(FXRate, fx_id)
     if not fx:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="FX rate not found")
@@ -48,7 +59,12 @@ def get_fx_rate(fx_id: int, db: Session = Depends(get_db)) -> FXRate:
 
 
 @router.put("/{fx_id}", response_model=FXRateRead)
-def update_fx_rate(fx_id: int, payload: FXRateUpdate, db: Session = Depends(get_db)) -> FXRate:
+def update_fx_rate(
+    fx_id: int,
+    payload: FXRateUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FXRate:
     fx = db.get(FXRate, fx_id)
     if not fx:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="FX rate not found")
@@ -64,7 +80,11 @@ def update_fx_rate(fx_id: int, payload: FXRateUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{fx_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_fx_rate(fx_id: int, db: Session = Depends(get_db)) -> None:
+def delete_fx_rate(
+    fx_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     fx = db.get(FXRate, fx_id)
     if not fx:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="FX rate not found")

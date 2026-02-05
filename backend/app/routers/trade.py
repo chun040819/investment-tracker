@@ -6,8 +6,10 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.trade import Trade
+from app.models.user import User
 from app.schemas.trade import TradeCreate, TradeRead, TradeUpdate
 from app.routers.utils import handle_integrity_error
 from app.models.tag import Tag
@@ -151,6 +153,7 @@ def list_trades(
     account_id: int | None = Query(default=None),
     from_date: date | None = Query(default=None, alias="from"),
     to_date: date | None = Query(default=None, alias="to"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[Trade]:
     stmt = select(Trade)
@@ -172,7 +175,11 @@ def list_trades(
 
 
 @router.post("", response_model=TradeRead, status_code=status.HTTP_201_CREATED)
-def create_trade(payload: TradeCreate, db: Session = Depends(get_db)) -> Trade:
+def create_trade(
+    payload: TradeCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Trade:
     data = payload.model_dump()
     tag_names = data.pop("tags", None)
     _normalize_trade_currencies(db, data)
@@ -205,7 +212,12 @@ def create_trade(payload: TradeCreate, db: Session = Depends(get_db)) -> Trade:
 
 
 @router.put("/{trade_id}", response_model=TradeRead)
-def update_trade(trade_id: int, payload: TradeUpdate, db: Session = Depends(get_db)) -> Trade:
+def update_trade(
+    trade_id: int,
+    payload: TradeUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Trade:
     trade = db.get(Trade, trade_id)
     if not trade:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
@@ -263,7 +275,11 @@ def update_trade(trade_id: int, payload: TradeUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_trade(trade_id: int, db: Session = Depends(get_db)) -> None:
+def delete_trade(
+    trade_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     trade = db.get(Trade, trade_id)
     if not trade:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found")
