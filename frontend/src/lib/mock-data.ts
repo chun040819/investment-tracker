@@ -238,3 +238,56 @@ export const CashTransactionsData = [
     note: "Sell 20 TSLA @ $210",
   }
 ];
+
+export const DividendHistory = [
+  { month: "Jan", amount: 45.00 },
+  { month: "Feb", amount: 50.00 },
+  { month: "Mar", amount: 55.00 },
+  { month: "Apr", amount: 48.00 },
+  { month: "May", amount: 60.00 },
+  { month: "Jun", amount: 58.00 },
+  { month: "Jul", amount: 65.00 },
+  { month: "Aug", amount: 70.00 },
+  { month: "Sep", amount: 72.00 },
+  { month: "Oct", amount: 68.00 },
+  { month: "Nov", amount: 75.00 },
+  { month: "Dec", amount: 80.00 },
+];
+
+export const DividendByAsset = [
+  { symbol: "VTI", amount: 350.00 },
+  { symbol: "AAPL", amount: 150.00 },
+  { symbol: "MSFT", amount: 120.00 },
+  { symbol: "KO", amount: 80.00 },
+  { symbol: "JNJ", amount: 65.00 },
+];
+
+export const PerformanceHistory = [
+  { date: "2023-01", value: 45000, pnl: 0 },
+  { date: "2023-02", value: 46000, pnl: 1000 },
+  { date: "2023-03", value: 45500, pnl: 500 },
+  { date: "2023-04", value: 47000, pnl: 2000 },
+  { date: "2023-05", value: 48500, pnl: 3500 },
+  { date: "2023-06", value: 49000, pnl: 4000 },
+  { date: "2023-07", value: 50500, pnl: 5500 },
+  { date: "2023-08", value: 50000, pnl: 5000 },
+  { date: "2023-09", value: 51200, pnl: 6200 },
+  { date: "2023-10", value: 51000, pnl: 6000 },
+  { date: "2023-11", value: 52500, pnl: 7500 },
+  { date: "2023-12", value: 53500, pnl: 8500 },
+];
+
+export const PerformanceMetricsData = {
+  realizedPnL: 5400.00,
+  unrealizedPnL: 8500.00,
+  totalReturn: 13900.00,
+  returnPercent: 12.5,
+};
+
+export const FeesDistribution = [
+  { name: "Commissions", value: 120.00, color: "#f87171" }, // red-400
+  { name: "Regulations", value: 45.00, color: "#fbbf24" }, // amber-400
+  { name: "ADR Fees", value: 15.00, color: "#60a5fa" }, // blue-400
+  { name: "Tax", value: 80.00, color: "#94a3b8" }, // slate-400
+];
+
