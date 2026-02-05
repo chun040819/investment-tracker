@@ -6,8 +6,10 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.db.session import get_db
 from app.models.cash_transaction import CashTransaction, CashTxnType
+from app.models.user import User
 from app.schemas.cash_transaction import (
     CashTransactionCreate,
     CashTransactionRead,
@@ -35,6 +37,7 @@ def list_cash_transactions(
     asset_id: int | None = Query(default=None),
     from_date: date | None = Query(default=None, alias="from"),
     to_date: date | None = Query(default=None, alias="to"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[CashTransaction]:
     stmt = select(CashTransaction)
@@ -56,7 +59,11 @@ def list_cash_transactions(
 
 
 @router.post("", response_model=CashTransactionRead, status_code=status.HTTP_201_CREATED)
-def create_cash_transaction(payload: CashTransactionCreate, db: Session = Depends(get_db)) -> CashTransaction:
+def create_cash_transaction(
+    payload: CashTransactionCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CashTransaction:
     data = payload.model_dump()
     data["amount"] = normalize_amount(payload.type, data["amount"])
     txn = CashTransaction(**data)
@@ -72,7 +79,12 @@ def create_cash_transaction(payload: CashTransactionCreate, db: Session = Depend
 
 
 @router.put("/{txn_id}", response_model=CashTransactionRead)
-def update_cash_transaction(txn_id: int, payload: CashTransactionUpdate, db: Session = Depends(get_db)) -> CashTransaction:
+def update_cash_transaction(
+    txn_id: int,
+    payload: CashTransactionUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CashTransaction:
     txn = db.get(CashTransaction, txn_id)
     if not txn:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cash transaction not found")
@@ -97,7 +109,11 @@ def update_cash_transaction(txn_id: int, payload: CashTransactionUpdate, db: Ses
 
 
 @router.delete("/{txn_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_cash_transaction(txn_id: int, db: Session = Depends(get_db)) -> None:
+def delete_cash_transaction(
+    txn_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
     txn = db.get(CashTransaction, txn_id)
     if not txn:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cash transaction not found")
